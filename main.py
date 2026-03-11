@@ -23,32 +23,27 @@ while True:
         registrar_usuario (usuario, id_usuario)
 
     elif opcion == 3:
-        codigo = int(input("Ingrese codigo : "))
-        usuario = int(input("Ingrese Id usuario : "))
+
+        codigo = int(input("Codigo del libro: "))
+        usuario = int(input("ID del usuario: "))
 
         prestar_libro(codigo, usuario)
 
     elif opcion == 4:
-        codigo = int(input("Ingrese codigo : "))
-        usuario = int(input("Ingrese Id de usuario : "))
+        codigo = int(input("Codigo del libro: "))
 
-        devolver_libro(codigo, usuario)
+        devolver_libro(codigo)
 
     elif opcion == 5:
-        if len(libros) == 0:
-            print("No hay libros registrados")
-        
-        for libro in libros:
-            libro.mostrar_info()
+        ver_libros()
 
     elif opcion == 6:
-        if len(usuarios) == 0:
-            print("No hay usuarios registrados")
-
-        for usuario in usuarios:
-            usuario.mostrar_info()
+        ver_usuarios()
 
     elif opcion == 7:
+        ver_prestamos()
+
+    elif opcion == 8:
         print ("Saliendo del sistema")
         break
 

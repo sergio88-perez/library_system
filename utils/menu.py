@@ -6,4 +6,5 @@ def mostrar_menu ():
     print ("4. Devolver Libro")
     print ("5. Ver Libros")
     print ("6. Ver Usuarios")
-    print ("7. Salir")
+    print ("7. Ver Prestamos")
+    print ("8. Salir")

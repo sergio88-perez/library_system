@@ -31,5 +31,15 @@ def crear_tablas():
     )
     """)
 
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS prestamos(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    codigo_libro INTEGER,
+    id_usuario INTEGER,
+    FOREIGN KEY (codigo_libro) REFERENCES libros(codigo),
+    FOREIGN KEY (id_usuario) REFERENCES usuarios(id)
+    )
+    """)
+
     conexion.commit()
     conexion.close()

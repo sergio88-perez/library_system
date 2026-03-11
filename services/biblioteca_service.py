@@ -40,15 +40,53 @@ def ver_libros():
     conexion = conectar()
     cursor = conexion.cursor()
 
-    cursor.execute("SELECT * FROM libros")
+    cursor.execute("""
+    SELECT libros.codigo, libros.titulo, usuarios.nombre
+    FROM libros
+    LEFT JOIN prestamos ON libros.codigo = prestamos.codigo_libro
+    LEFT JOIN usuarios ON prestamos.id_usuario = usuarios.id_usuario
+    """)
 
     libros = cursor.fetchall()
 
+    if len(libros) == 0:
+        print("No hay libros registrados")
+
     for libro in libros:
 
-        estado = "Prestado" if libro[3] == 1 else "Disponible"
+        codigo = libro[0]
+        titulo = libro[1]
+        usuario = libro[2]
 
-        print(libro[1], "-", estado)
+        if usuario:
+            estado = f"Prestado a {usuario}"
+        else:
+            estado = "Disponible"
+
+        print("Codigo:", codigo)
+        print("Titulo:", titulo)
+        print("Estado:", estado)
+        print("----------------")
+
+    conexion.close()
+
+def ver_usuarios():
+
+    conexion = conectar()
+    cursor = conexion.cursor()
+
+    cursor.execute("SELECT * FROM usuarios")
+
+    usuarios = cursor.fetchall()
+
+    if len(usuarios) == 0:
+        print("No hay usuarios registrados")
+
+    for usuario in usuarios:
+
+        print("ID:", usuario[0])
+        print("Nombre:", usuario[1])
+        print("------------------")
 
     conexion.close()
 
@@ -84,33 +122,82 @@ def buscar_usuario(id_usuario):
 
     return usuario
 
-def prestar_libro(codigo):
+def prestar_libro(codigo_libro, id_usuario):
 
     conexion = conectar()
     cursor = conexion.cursor()
 
     cursor.execute(
-        "UPDATE libros SET prestado = 1 WHERE codigo = ?",
-        (codigo,)
+        "SELECT prestado FROM libros WHERE codigo = ?",
+        (codigo_libro,)
     )
 
-    conexion.commit()
+    libro = cursor.fetchone()
+
+    if libro is None:
+        print("Libro no encontrado")
+
+    elif libro[0] == 1:
+        print("Libro ya prestado")
+
+    else:
+
+        cursor.execute(
+            "UPDATE libros SET prestado = 1 WHERE codigo = ?",
+            (codigo_libro,)
+        )
+
+        cursor.execute(
+            "INSERT INTO prestamos (codigo_libro, id_usuario) VALUES (?, ?)",
+            (codigo_libro, id_usuario)
+        )
+
+        conexion.commit()
+
+        print("Libro prestado correctamente")
+
     conexion.close()
 
-    print("Libro prestado")
-
-def devolver_libro(codigo):
+def devolver_libro(codigo_libro):
 
     conexion = conectar()
     cursor = conexion.cursor()
 
     cursor.execute(
         "UPDATE libros SET prestado = 0 WHERE codigo = ?",
-        (codigo,)
+        (codigo_libro,)
+    )
+
+    cursor.execute(
+        "DELETE FROM prestamos WHERE codigo_libro = ?",
+        (codigo_libro,)
     )
 
     conexion.commit()
+
+    print("Libro devuelto")
+
     conexion.close()
 
-    print("Libro devuelto correctamente")
+def ver_prestamos():
+
+    conexion = conectar()
+    cursor = conexion.cursor()
+
+    cursor.execute("""
+    SELECT usuarios.nombre, libros.titulo
+    FROM prestamos
+    JOIN usuarios ON prestamos.id_usuario = usuarios.id_usuario
+    JOIN libros ON prestamos.codigo_libro = libros.codigo
+    """)
+
+    prestamos = cursor.fetchall()
+
+    if len(prestamos) == 0:
+        print("No hay prestamos")
+
+    for p in prestamos:
+        print(p[0], "tiene el libro:", p[1])
+
+    conexion.close()
 
