@@ -1,5 +1,8 @@
+from database.db import crear_tablas
 from services.biblioteca_service import *
 from utils.menu import mostrar_menu
+
+crear_tablas()
 
 while True:
 

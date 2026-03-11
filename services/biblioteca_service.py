@@ -1,52 +1,116 @@
+from database.db import conectar
 from models.libro import Libro
 from models.usuario import Usuario
 
 libros = []
 usuarios = []
 
-def registrar_libro (titulo, autor, codigo):
-    libro = Libro(titulo, autor, codigo)
-    libros.append(libro)
-    print ("libro registrado correctamente")
+def registrar_libro(titulo, autor, codigo):
 
-def registrar_usuario (nombre, id_usuario):
-    usuario = Usuario (nombre, id_usuario)
-    usuarios.append(usuario)
-    print ("Usuario registrado correctamente")
+    conexion = conectar()
+    cursor = conexion.cursor()
 
-def buscar_libro (codigo):
+    cursor.execute(
+        "INSERT INTO libros VALUES (?, ?, ?, ?)",
+        (codigo, titulo, autor, 0)
+    )
+
+    conexion.commit()
+    conexion.close()
+
+    print("Libro registrado")
+
+def registrar_usuario(nombre, id_usuario):
+
+    conexion = conectar()
+    cursor = conexion.cursor()
+
+    cursor.execute(
+        "INSERT INTO usuarios VALUES (?, ?)",
+        (id_usuario, nombre)
+    )
+
+    conexion.commit()
+    conexion.close()
+
+    print("Usuario registrado correctamente")
+
+def ver_libros():
+
+    conexion = conectar()
+    cursor = conexion.cursor()
+
+    cursor.execute("SELECT * FROM libros")
+
+    libros = cursor.fetchall()
+
     for libro in libros:
-        if libro.codigo == codigo:
-            return libro
-    return None
+
+        estado = "Prestado" if libro[3] == 1 else "Disponible"
+
+        print(libro[1], "-", estado)
+
+    conexion.close()
+
+def buscar_libro(codigo):
+
+    conexion = conectar()
+    cursor = conexion.cursor()
+
+    cursor.execute(
+        "SELECT * FROM libros WHERE codigo = ?",
+        (codigo,)
+    )
+
+    libro = cursor.fetchone()
+
+    conexion.close()
+
+    return libro
         
-def buscar_usuario (id_usuario):
-    for usuario in usuarios:
-        if usuario.id_usuario == id_usuario:
-            return usuario
-    return None
+def buscar_usuario(id_usuario):
 
-def prestar_libro (codigo_libro, id_usuario):
-    libro = buscar_libro (codigo_libro)
-    usuario = buscar_usuario (id_usuario)
-    if libro and usuario:
-        if not libro.prestado:
-            libro.prestar()
-            usuario.libros_prestados.append(libro)
-        else:
-            print ("El libro ya esta prestado")
-    else:
-        print ("Libro o usuario no encontrado")
+    conexion = conectar()
+    cursor = conexion.cursor()
 
-def devolver_libro (codigo_libro, id_usuario):
-    libro = buscar_libro (codigo_libro)
-    usuario = buscar_usuario (id_usuario)
-    if libro and usuario:
-        if libro in usuario.libros_prestados:
-            libro.devolver()
-            usuario.libros_prestados.remove(libro)
-        else:
-            print ("El usuario no tiene ese libro")
-    else:
-        print ("Libro o usuario no encontrado")
+    cursor.execute(
+        "SELECT * FROM usuarios WHERE id_usuario = ?",
+        (id_usuario,)
+    )
+
+    usuario = cursor.fetchone()
+
+    conexion.close()
+
+    return usuario
+
+def prestar_libro(codigo):
+
+    conexion = conectar()
+    cursor = conexion.cursor()
+
+    cursor.execute(
+        "UPDATE libros SET prestado = 1 WHERE codigo = ?",
+        (codigo,)
+    )
+
+    conexion.commit()
+    conexion.close()
+
+    print("Libro prestado")
+
+def devolver_libro(codigo):
+
+    conexion = conectar()
+    cursor = conexion.cursor()
+
+    cursor.execute(
+        "UPDATE libros SET prestado = 0 WHERE codigo = ?",
+        (codigo,)
+    )
+
+    conexion.commit()
+    conexion.close()
+
+    print("Libro devuelto correctamente")
 
