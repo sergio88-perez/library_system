@@ -1,6 +1,35 @@
+from fastapi import FastAPI
 from database.db import crear_tablas
 from services.biblioteca_service import *
 from utils.menu import mostrar_menu
+
+app = FastAPI()
+
+@app.get("/libros")
+def obtener_libros():
+
+    return ver_libros()
+
+@app.post("/libros")
+def crear_libro(titulo: str, autor: str, codigo: int):
+
+    registrar_libro(titulo, autor, codigo)
+
+    return {"mensaje": "Libro registrado"}
+
+@app.post("/prestamos")
+def prestar(codigo_libro: int, id_usuario: int):
+
+    prestar_libro(codigo_libro, id_usuario)
+
+    return {"mensaje": "Libro prestado"}
+
+@app.delete("/prestamos")
+def devolver(codigo_libro: int):
+
+    devolver_libro(codigo_libro)
+
+    return {"mensaje": "Libro devuelto"}
 
 crear_tablas()
 
