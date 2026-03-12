@@ -1,78 +1,75 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from database.db import crear_tablas
-from services.biblioteca_service import *
-from utils.menu import mostrar_menu
+from services.biblioteca_service import (
+    registrar_libro,
+    registrar_usuario,
+    ver_libros,
+    ver_usuarios,
+    ver_prestamos,
+    prestar_libro,
+    devolver_libro
+)
+from schemas import LibroCreate, UsuarioCreate, PrestamoCreate
 
-app = FastAPI()
-
-@app.get("/libros")
-def obtener_libros():
-
-    return ver_libros()
-
-@app.post("/libros")
-def crear_libro(titulo: str, autor: str, codigo: int):
-
-    registrar_libro(titulo, autor, codigo)
-
-    return {"mensaje": "Libro registrado"}
-
-@app.post("/prestamos")
-def prestar(codigo_libro: int, id_usuario: int):
-
-    prestar_libro(codigo_libro, id_usuario)
-
-    return {"mensaje": "Libro prestado"}
-
-@app.delete("/prestamos")
-def devolver(codigo_libro: int):
-
-    devolver_libro(codigo_libro)
-
-    return {"mensaje": "Libro devuelto"}
+app = FastAPI(title="Sistema de Biblioteca")
 
 crear_tablas()
 
-while True:
+@app.get("/")
+def inicio():
+    return {
+        "mensaje": "API de biblioteca funcionando",
+        "opciones": {
+            "1": "POST /libros",
+            "2": "POST /usuarios",
+            "3": "POST /prestamos",
+            "4": "DELETE /prestamos/{codigo_libro}",
+            "5": "GET /libros",
+            "6": "GET /usuarios",
+            "7": "GET /prestamos"
+        }
+    }
 
-    mostrar_menu()
-    opcion = int(input ("Seleccione una opción: "))
+@app.post("/libros", summary="1. Registrar libro")
+def crear_libro(libro: LibroCreate):
+    try:
+        mensaje = registrar_libro(libro.titulo, libro.autor, libro.codigo)
+        return {"mensaje": mensaje}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
-    if opcion == 1:
-        titulo = input("Ingresar titulo : ")
-        autor = input ("Ingrese nombre de autor : ")
-        codigo = int(input ("Ingrese codigo : "))
+@app.post("/usuarios", summary="2. Registrar usuario")
+def crear_usuario(usuario: UsuarioCreate):
+    try:
+        mensaje = registrar_usuario(usuario.nombre, usuario.id_usuario)
+        return {"mensaje": mensaje}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
-        registrar_libro (titulo, autor, codigo)
+@app.post("/prestamos", summary="3. Prestar libro")
+def crear_prestamo(prestamo: PrestamoCreate):
+    try:
+        mensaje = prestar_libro(prestamo.codigo_libro, prestamo.id_usuario)
+        return {"mensaje": mensaje}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
-    elif opcion == 2:
-        usuario = input ("Ingresar nombre de usuario : ")
-        id_usuario = int(input("Ingrese Id de usuario : "))
+@app.delete("/prestamos/{codigo_libro}", summary="4. Devolver libro")
+def devolver_prestamo(codigo_libro: int):
+    try:
+        mensaje = devolver_libro(codigo_libro)
+        return {"mensaje": mensaje}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
-        registrar_usuario (usuario, id_usuario)
+@app.get("/libros", summary="5. Ver libros")
+def obtener_libros():
+    return ver_libros()
 
-    elif opcion == 3:
+@app.get("/usuarios", summary="6. Ver usuarios")
+def obtener_usuarios():
+    return ver_usuarios()
 
-        codigo = int(input("Codigo del libro: "))
-        usuario = int(input("ID del usuario: "))
-
-        prestar_libro(codigo, usuario)
-
-    elif opcion == 4:
-        codigo = int(input("Codigo del libro: "))
-
-        devolver_libro(codigo)
-
-    elif opcion == 5:
-        ver_libros()
-
-    elif opcion == 6:
-        ver_usuarios()
-
-    elif opcion == 7:
-        ver_prestamos()
-
-    elif opcion == 8:
-        print ("Saliendo del sistema")
-        break
-
+@app.get("/prestamos", summary="7. Ver préstamos")
+def obtener_prestamos():
+    return ver_prestamos()

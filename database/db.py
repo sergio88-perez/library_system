@@ -1,43 +1,39 @@
 import sqlite3
-import os
+from pathlib import Path
 
-BASE_DIR = os.path.dirname(__file__)
-DB_PATH = os.path.join(BASE_DIR, "biblioteca.db")
+DB_PATH = Path(__file__).resolve().parent / "biblioteca.db"
 
 def conectar():
-
     conexion = sqlite3.connect(DB_PATH)
-
+    conexion.row_factory = sqlite3.Row
     return conexion
 
 def crear_tablas():
-
     conexion = conectar()
     cursor = conexion.cursor()
 
     cursor.execute("""
-    CREATE TABLE IF NOT EXISTS libros(
+    CREATE TABLE IF NOT EXISTS libros (
         codigo INTEGER PRIMARY KEY,
-        titulo TEXT,
-        autor TEXT,
-        prestado INTEGER
+        titulo TEXT NOT NULL,
+        autor TEXT NOT NULL,
+        prestado INTEGER DEFAULT 0
     )
     """)
 
     cursor.execute("""
-    CREATE TABLE IF NOT EXISTS usuarios(
+    CREATE TABLE IF NOT EXISTS usuarios (
         id_usuario INTEGER PRIMARY KEY,
-        nombre TEXT
+        nombre TEXT NOT NULL
     )
     """)
 
     cursor.execute("""
-    CREATE TABLE IF NOT EXISTS prestamos(
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    codigo_libro INTEGER,
-    id_usuario INTEGER,
-    FOREIGN KEY (codigo_libro) REFERENCES libros(codigo),
-    FOREIGN KEY (id_usuario) REFERENCES usuarios(id)
+    CREATE TABLE IF NOT EXISTS prestamos (
+        codigo_libro INTEGER,
+        id_usuario INTEGER,
+        FOREIGN KEY (codigo_libro) REFERENCES libros(codigo),
+        FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario)
     )
     """)
 
