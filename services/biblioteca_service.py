@@ -4,6 +4,7 @@ def registrar_libro(titulo, autor, codigo):
     conexion = conectar()
     cursor = conexion.cursor()
 
+    # Verificar si el libro ya existe en la base de datos
     existente = cursor.execute(
         "SELECT codigo FROM libros WHERE codigo = ?",
         (codigo,)
@@ -22,11 +23,11 @@ def registrar_libro(titulo, autor, codigo):
     conexion.close()
     return "Libro registrado correctamente"
 
-
 def registrar_usuario(nombre, id_usuario):
     conexion = conectar()
     cursor = conexion.cursor()
 
+    # Verificar si el usuario ya existe en la base de datos
     existente = cursor.execute(
         "SELECT id_usuario FROM usuarios WHERE id_usuario = ?",
         (id_usuario,)
@@ -45,11 +46,11 @@ def registrar_usuario(nombre, id_usuario):
     conexion.close()
     return "Usuario registrado correctamente"
 
-
 def ver_libros():
     conexion = conectar()
     cursor = conexion.cursor()
 
+    # Obtener todos los libros de la base de datos
     filas = cursor.execute("""
         SELECT codigo, titulo, autor, prestado
         FROM libros
@@ -59,11 +60,11 @@ def ver_libros():
     conexion.close()
     return [dict(fila) for fila in filas]
 
-
 def ver_usuarios():
     conexion = conectar()
     cursor = conexion.cursor()
 
+    # Obtener todos los usuarios de la base de datos
     filas = cursor.execute("""
         SELECT id_usuario, nombre
         FROM usuarios
@@ -73,11 +74,11 @@ def ver_usuarios():
     conexion.close()
     return [dict(fila) for fila in filas]
 
-
 def ver_prestamos():
     conexion = conectar()
     cursor = conexion.cursor()
 
+    # Obtener todos los préstamos de la base de datos
     filas = cursor.execute("""
         SELECT p.codigo_libro, l.titulo, p.id_usuario, u.nombre
         FROM prestamos p
@@ -89,11 +90,11 @@ def ver_prestamos():
     conexion.close()
     return [dict(fila) for fila in filas]
 
-
 def prestar_libro(codigo_libro, id_usuario):
     conexion = conectar()
     cursor = conexion.cursor()
 
+    # Verificar si el libro existe
     libro = cursor.execute(
         "SELECT * FROM libros WHERE codigo = ?",
         (codigo_libro,)
@@ -103,6 +104,7 @@ def prestar_libro(codigo_libro, id_usuario):
         conexion.close()
         raise ValueError("Libro no encontrado")
 
+    # Verificar si el usuario existe
     usuario = cursor.execute(
         "SELECT * FROM usuarios WHERE id_usuario = ?",
         (id_usuario,)
@@ -130,11 +132,11 @@ def prestar_libro(codigo_libro, id_usuario):
     conexion.close()
     return "Libro prestado correctamente"
 
-
 def devolver_libro(codigo_libro):
     conexion = conectar()
     cursor = conexion.cursor()
 
+    # Verificar si el libro está prestado
     prestamo = cursor.execute(
         "SELECT * FROM prestamos WHERE codigo_libro = ?",
         (codigo_libro,)

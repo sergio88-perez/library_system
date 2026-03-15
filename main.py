@@ -1,5 +1,7 @@
-from fastapi import FastAPI, HTTPException
-from database.db import crear_tablas
+from fastapi import FastAPI, HTTPException, Request, Form, Path
+from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 from services.biblioteca_service import (
     registrar_libro,
     registrar_usuario,
@@ -13,63 +15,70 @@ from schemas import LibroCreate, UsuarioCreate, PrestamoCreate
 
 app = FastAPI(title="Sistema de Biblioteca")
 
-crear_tablas()
+# Montamos la carpeta frontend para servir los archivos estáticos (style.css, app.js)
+app.mount("/frontend", StaticFiles(directory="frontend"), name="frontend")
 
-@app.get("/")
-def inicio():
-    return {
-        "mensaje": "API de biblioteca funcionando",
-        "opciones": {
-            "1": "POST /libros",
-            "2": "POST /usuarios",
-            "3": "POST /prestamos",
-            "4": "DELETE /prestamos/{codigo_libro}",
-            "5": "GET /libros",
-            "6": "GET /usuarios",
-            "7": "GET /prestamos"
-        }
-    }
+# Configuramos Jinja2 para cargar las plantillas desde la carpeta frontend
+templates = Jinja2Templates(directory="frontend")
 
-@app.post("/libros", summary="1. Registrar libro")
-def crear_libro(libro: LibroCreate):
+@app.get("/", response_class=HTMLResponse)
+def index(request: Request):
+    return templates.TemplateResponse("index.html", {"request": request})
+
+# Registrar libro
+@app.post("/libros")
+async def registrar_libro_api(titulo: str = Form(...), autor: str = Form(...), codigo: int = Form(...)):
     try:
-        mensaje = registrar_libro(libro.titulo, libro.autor, libro.codigo)
+        mensaje = registrar_libro(titulo, autor, codigo)
+        return {"mensaje": mensaje, "titulo": titulo, "autor": autor, "codigo": codigo}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+# Registrar usuario
+@app.post("/usuarios")
+async def registrar_usuario_api(nombre: str = Form(...), id_usuario: int = Form(...)):
+    try:
+        mensaje = registrar_usuario(nombre, id_usuario)
+        return {"mensaje": mensaje, "nombre": nombre, "id_usuario": id_usuario}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+# Prestar libro
+@app.post("/prestamos")
+async def prestar_libro_api(codigo_libro: int = Form(...), id_usuario: int = Form(...)):
+    try:
+        mensaje = prestar_libro(codigo_libro, id_usuario)  # Llama a la función del servicio
         return {"mensaje": mensaje}
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-@app.post("/usuarios", summary="2. Registrar usuario")
-def crear_usuario(usuario: UsuarioCreate):
-    try:
-        mensaje = registrar_usuario(usuario.nombre, usuario.id_usuario)
-        return {"mensaje": mensaje}
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-@app.post("/prestamos", summary="3. Prestar libro")
-def crear_prestamo(prestamo: PrestamoCreate):
-    try:
-        mensaje = prestar_libro(prestamo.codigo_libro, prestamo.id_usuario)
-        return {"mensaje": mensaje}
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-@app.delete("/prestamos/{codigo_libro}", summary="4. Devolver libro")
-def devolver_prestamo(codigo_libro: int):
+# Devolver libro
+@app.post("/devoluciones")
+async def devolver_libro_api(codigo_libro: int = Form(...)):
     try:
         mensaje = devolver_libro(codigo_libro)
         return {"mensaje": mensaje}
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-@app.get("/libros", summary="5. Ver libros")
-def obtener_libros():
-    return ver_libros()
+# Ver libros
+@app.get("/libros")
+async def obtener_libros():
+    libros = ver_libros()
+    return {"libros": libros}
 
-@app.get("/usuarios", summary="6. Ver usuarios")
-def obtener_usuarios():
-    return ver_usuarios()
+# Ver usuarios
+@app.get("/usuarios")
+async def obtener_usuarios():
+    usuarios = ver_usuarios()
+    return {"usuarios": usuarios}
 
-@app.get("/prestamos", summary="7. Ver préstamos")
-def obtener_prestamos():
-    return ver_prestamos()
+# Ver préstamos
+@app.get("/prestamos")
+async def obtener_prestamos():
+    prestamos = ver_prestamos()
+    return {"prestamos": prestamos}
+
+# Inicializar base de datos (crear tablas)
+from database.db import crear_tablas
+crear_tablas()
